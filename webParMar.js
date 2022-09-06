@@ -109,6 +109,18 @@ async function connectToParMar(forcePermissionPrompt = false, autoConnectIndex =
         throw 'WebParMar (noSerial): Serial device not available in this browser.';
     }
 
+    // Pre-make global object:
+    if (typeof gParMar !== 'undefined') {
+        var gObjScript = document.createElement("script");
+        document.head.appendChild(gObjScript);
+        gObjScript.innerText = "var gParMar = {};";
+    }
+    gParMar = {
+        'sendMarker': (x) => {throw 'WebParMar (notConnected): Serial device not connected.'},
+        'info': null,
+        'disconnect': () => {throw 'WebParMar (notConnected): Serial device not connected.'}
+    };
+
     // Serial port object:
     let port;
 
@@ -194,17 +206,17 @@ async function connectToParMar(forcePermissionPrompt = false, autoConnectIndex =
         rawWriter.releaseLock();
         await port.close();
         rawWriter = null
+        gParMar = {
+            'sendMarker': (x) => {throw 'WebParMar (notConnected): Serial device not connected.'},
+            'info': null,
+            'disconnect': () => {throw 'WebParMar (notConnected): Serial device not connected.'}
+        };
     };
 
     // Clear marker:
     sendMarker(0);
 
-    // Make global object:
-    if (typeof gParMar !== 'undefined') {
-        var gObjScript = document.createElement("script");
-        document.head.appendChild(gObjScript);
-        gObjScript.innerText = "var gParMar = {};";
-    }
+    // Set object:
     gParMar = {
         'sendMarker': sendMarker,
         'info': deviceInfo,
