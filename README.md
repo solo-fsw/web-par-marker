@@ -2,7 +2,7 @@
 ## Intro
 This library allows control of the ParMarker device from inside a browser using the WebSerial API. This allows users to send markers from online experiments, such as Qualtrics, OSWeb, jsPsych, etc.
 
-See the demo [here](demo.html) and the repo [here](https://github.com/solo-fsw/web-par-marker).
+See the demo [here](https://solo-fsw.github.io/web-par-marker/demo.html) and the repo [here](https://github.com/solo-fsw/web-par-marker).
 
 ## Usage
 
