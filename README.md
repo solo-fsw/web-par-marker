@@ -16,9 +16,9 @@ Inside your website, use the `connectToParMar()` function to connect to the seri
 Connect to ParMar (you can either capture the argument passed to the resolve function, or just use `gParMar`, the global variable automatically created by `connectToParMar()`):
 ```
 connectToParMar().then(() => {
-    \\ Handle successful connection here.
+    // Handle successful connection here.
 }).catch((e) => {
-    \\ Handle connection error here.
+    // Handle connection error here.
 })
 ```
 
@@ -26,9 +26,9 @@ Send marker using `gParMar`. A value of 255 is sent here:
 ```
 try {
     gParMar.sendMarker(255);
-    \\ Handle successful marker sending here.
+    // Handle successful marker sending here.
 } catch (e) {
-    \\ Handle marker error here.
+    // Handle marker error here.
 };
 ```
 
@@ -36,9 +36,9 @@ try {
 Disconnect using `gParMar`:
 ```
 gParMar.disconnect().then(() => {
-    \\ Handle successful disconnection here.
+    // Handle successful disconnection here.
 }).catch((e) => {
-    \\ Handle disconnection error here.
+    // Handle disconnection error here.
 })
 ```
 

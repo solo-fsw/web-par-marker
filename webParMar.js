@@ -116,7 +116,7 @@ async function connectToParMar(forcePermissionPrompt = false, autoConnectIndex =
         gObjScript.innerText = "var gParMar = {};";
     }
     gParMar = {
-        'sendMarker': (x) => {throw 'WebParMar (notConnected): Serial device not connected.'},
+        'sendMarker': (x) => {throw `WebParMar (notConnected): Serial device not connected. Marker = ${x}`},
         'info': null,
         'disconnect': () => {throw 'WebParMar (notConnected): Serial device not connected.'}
     };
@@ -207,7 +207,7 @@ async function connectToParMar(forcePermissionPrompt = false, autoConnectIndex =
         await port.close();
         rawWriter = null
         gParMar = {
-            'sendMarker': (x) => {throw 'WebParMar (notConnected): Serial device not connected.'},
+            'sendMarker': (x) => {throw `WebParMar (notConnected): Serial device not connected. Marker = ${x}`},
             'info': null,
             'disconnect': () => {throw 'WebParMar (notConnected): Serial device not connected.'}
         };
