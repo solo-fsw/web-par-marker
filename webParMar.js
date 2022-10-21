@@ -110,7 +110,7 @@ async function connectToParMar(forcePermissionPrompt = false, autoConnectIndex =
     }
 
     // Pre-make global object:
-    if (typeof gParMar !== 'undefined') {
+    if (typeof gParMar == 'undefined') {
         var gObjScript = document.createElement("script");
         document.head.appendChild(gObjScript);
         gObjScript.innerText = "var gParMar = {};";
