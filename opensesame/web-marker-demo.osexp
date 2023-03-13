@@ -1,0 +1,406 @@
+---
+API: 2.1
+OpenSesame: 3.3.14
+Platform: nt
+---
+set width 1024
+set uniform_coordinates yes
+set title "New experiment"
+set subject_parity even
+set subject_nr 0
+set start experiment
+set sound_sample_size -16
+set sound_freq 48000
+set sound_channels 2
+set sound_buf_size 1024
+set sampler_backend psycho
+set round_decimals 2
+set mouse_backend psycho
+set keyboard_backend psycho
+set height 768
+set fullscreen no
+set form_clicks no
+set foreground black
+set font_underline no
+set font_size 18
+set font_italic no
+set font_family mono
+set font_bold no
+set experiment_path "C:\\ExperimentData\\repos\\web-par-marker\\opensesame"
+set disable_garbage_collection yes
+set description "The main experiment item"
+set coordinates uniform
+set compensation 0
+set color_backend psycho
+set clock_backend psycho
+set canvas_backend psycho
+set background white
+
+define sketchpad connected_screen
+	set start_response_interval no
+	set reset_variables no
+	set duration 2000
+	set description "Displays stimuli"
+	draw textline center=1 color=black font_bold=no font_family=serif font_italic=no font_size=18 html=yes show_if=always text="Connected<br /><br />Test trials will start now ..." x=0 y=0 z_index=0
+
+define sequence experiment
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run welcome_screen always
+	run webmarker_functions always
+	run webmarker_delay always
+	run webmarker_widget always
+	run connected_screen always
+	run test_loop always
+	run webmarker_disconnect always
+	run goodbye always
+
+define sketchpad goodbye
+	set duration 2000
+	set description "Displays stimuli"
+	draw textline center=1 color=black font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text=Goodbye x=0 y=0 z_index=0
+
+define sketchpad marker_screen
+	set duration 1000
+	set description "Displays stimuli"
+	draw textline center=1 color=black font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Sending marker [marker_value]." x=-32 y=0 z_index=0
+
+define inline_javascript send_marker
+	set description "Executes JavaScript code"
+	___run__
+	try {
+	    gParMar.sendMarker(vars.marker_value);
+	    // Handle successful marker sending here.
+	} catch (e) {
+	    // Handle marker error here.
+	};
+	__end__
+	set _prepare ""
+
+define loop test_loop
+	set source_file ""
+	set source table
+	set repeat 1
+	set order sequential
+	set description "Repeatedly runs another item"
+	set cycles 10
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 marker_value 1
+	setcycle 1 marker_value 2
+	setcycle 2 marker_value 4
+	setcycle 3 marker_value 8
+	setcycle 4 marker_value 16
+	setcycle 5 marker_value 32
+	setcycle 6 marker_value 64
+	setcycle 7 marker_value 128
+	setcycle 8 marker_value 255
+	setcycle 9 marker_value 0
+	run test_sequence
+
+define sequence test_sequence
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run send_marker always
+	run marker_screen always
+
+define sketchpad webmarker_delay
+	set duration 500
+	set description "Displays stimuli"
+
+define inline_javascript webmarker_disconnect
+	set description "Executes JavaScript code"
+	___run__
+	gParMar.disconnect().then(() => {
+	    // Handle successful disconnection here.
+	}).catch((e) => {
+	    // Handle disconnection error here.
+	})
+	__end__
+	set _prepare ""
+
+define inline_javascript webmarker_functions
+	set description "Executes JavaScript code"
+	___run__
+	// NOTE: 
+	//
+	//  The code below was taken from https://github.com/solo-fsw/web-par-marker 
+	//  and modified slightly for use in OpenSesame:
+	//    - Font sizes and container styles were tweaked.
+	//    - Once connected, the task is automatically advanced.
+	//    - The manual sending of markers has been disabled.
+	//
+	//  In order for the functions defined here to be accessable elsewhere, they are
+	//  added to the document head via DOM-manipulation at the end of this script.
+	//
+	// -Elio. March, 2022.
+	
+	
+	
+	//================================================================================================
+	function genWidget(parent) {
+	    // Creates the widget inside a parent. Meant for testing.
+	    //--------------------------------------------------------------------------------------------
+	
+	    // Make container:
+	    let container = document.createElement("div");
+	    container.setAttribute('display', 'grid');
+	    container.setAttribute("style", `
+	        height: 100%;
+	        border-style: solid;
+	        border-width: thin;
+	        margin: 20px;
+	        `);
+	    parent.appendChild(container);
+	
+	    // Style:
+	    let e_margin = 20;
+	
+	    // Connect btn:
+	    let btn_connect = document.createElement("input");
+	    btn_connect.setAttribute("id", "btn_connect");
+	    btn_connect.setAttribute("type", "button");
+	    btn_connect.setAttribute("value", "Connect");
+	    btn_connect.setAttribute("style", `margin : ${e_margin}px`);
+	    btn_connect.onclick = onConnectClick;
+	    container.appendChild(btn_connect);
+	
+	    // Status text:
+	    let status_text = document.createElement("p");
+	    status_text.setAttribute("id", "status_text");
+	    status_text.setAttribute("style", ` 
+	        margin : ${e_margin}px;
+	        height : 150px;
+	        text-align: center;
+	        `);
+	    status_text.innerHTML = 'Please click connect. Select the serial port if prompted.';
+	    container.appendChild(status_text);
+	
+	    // Marker input:
+	    let input_marker = document.createElement("input");
+	    input_marker.setAttribute("id", "marker_input");
+	    input_marker.setAttribute("type", "number");
+	    input_marker.setAttribute("value", "0");
+	    input_marker.setAttribute("style", `margin : ${e_margin}px`);
+	    //container.appendChild(input_marker);
+	
+	    // Marker send:
+	    let btn_send = document.createElement("input");
+	    btn_send.setAttribute("id", "btn_send");
+	    btn_send.setAttribute("type", "button");
+	    btn_send.setAttribute("value", "Send");
+	    btn_send.setAttribute("style", `margin : ${e_margin}px`);
+	    btn_send.disabled = true;
+	    btn_send.onclick = onSendClick;
+	    //container.appendChild(btn_send);
+	
+	    // callbacks:
+	    function onConnectClick() {
+	        connectToParMar().then(() => {
+	            btn_connect.setAttribute("value", "Disconnect");
+	            btn_connect.onclick = onDisconnectClick;
+	            btn_send.disabled = false;
+	            status_text.innerHTML = 'Connected to device:<br>';
+	            for (const [key, value] of Object.entries(gParMar.info)) {
+	                status_text.innerHTML += `${key}: ${value}<br>`;
+	              }
+	            status_text.innerHTML += '<br>Please wait ...';
+	            
+	              // Click the OK button after a few secs:
+	              setTimeout(()=> {
+	                document.getElementById('submitBtn').click();
+	              }
+	              , 3000);
+	              btn_connect.disabled = true;
+	              
+	        }).catch((e) => {
+	            status_text.innerHTML = `Error connecting.\n${e}`;
+	            status_text.innerHTML += '<br>Please click connect again.';
+	        })
+	    };
+	    function onDisconnectClick() {
+	        gParMar.disconnect().then(() => {
+	            btn_connect.setAttribute("value", "Connect");
+	            btn_connect.onclick = onConnectClick;
+	            btn_send.disabled = true;
+	            status_text.innerHTML = `Disconnected. Please click connect.`;
+	        }).catch((e) => {
+	            status_text.innerHTML = `Error disconnecting.\n${e}`;
+	        })
+	    };
+	    function onSendClick() {
+	        try {
+	            gParMar.sendMarker(input_marker.value);
+	            status_text.innerHTML = `Marker (${input_marker.value}) sent.`;
+	        } catch (e) {
+	            status_text.innerHTML = `Error sending marker.\n${e}`;
+	        };
+	    };
+	
+	};
+	
+	
+	
+	//================================================================================================
+	async function connectToParMar(forcePermissionPrompt = false, autoConnectIndex = 0) {
+	    // Connects to the ParMarker. Note, this function returns a Promise.
+	    //--------------------------------------------------------------------------------------------
+	
+	    if (!("serial" in navigator)){
+	        throw 'WebParMar (noSerial): Serial device not available in this browser.';
+	    }
+	
+	    // Pre-make global object:
+	    if (typeof gParMar == 'undefined') {
+	        var gObjScript = document.createElement("script");
+	        document.head.appendChild(gObjScript);
+	        gObjScript.innerText = "var gParMar = {};";
+	    }
+	    gParMar = {
+	        'sendMarker': (x) => {throw `WebParMar (notConnected): Serial device not connected. Marker = ${x}`},
+	        'info': null,
+	        'disconnect': () => {throw 'WebParMar (notConnected): Serial device not connected.'}
+	    };
+	
+	    // Serial port object:
+	    let port;
+	
+	    // Attempt to auto-connect:
+	    if (!forcePermissionPrompt) {
+	        const ports = await navigator.serial.getPorts();
+	        port = ports[autoConnectIndex];
+	    };
+	
+	    // If force permission is true, or if auto-connect failed, request port access:
+	    if (forcePermissionPrompt || !port) {
+	        try {
+	            usbVendorId = 0x2341;  // the Arduino vendor ID is: 0x2341.
+	            port = await navigator.serial.requestPort({
+	                filters: [{
+	                    usbVendorId
+	                }]
+	            });
+	        } catch (e) {
+	            throw 'WebParMar (noCom): user did not select COM device.';
+	        }
+	    };
+	
+	    // Serial params:
+	    const commandModeBaudRate = 4800;
+	    const dataModeBaudRate = 115200;
+	
+	    // Connect to port in command mode:
+	    if (!port) {
+	        console.error('WebParMar: unknown error.');
+	        throw 'WebParMar (unknownError): unknown error.';
+	    };
+	    try {
+	        await port.open({
+	            baudRate: commandModeBaudRate
+	        });
+	    } catch (e) {
+	        throw 'WebParMar (comNoOpen): could not open COM port.';
+	    };
+	
+	    // Request the info:
+	    let rawWriter = port.writable.getWriter();
+	    let infoRequestCode = new Uint8Array([86]); // 86 is 'V', the info request code.
+	    await rawWriter.write(infoRequestCode);
+	    rawWriter.releaseLock();
+	    rawWriter = null;
+	
+	    // Make text stream reader and read response:
+	    let decoder = new TextDecoderStream();
+	    let inputDone = port.readable.pipeTo(decoder.writable);
+	    let inputStream = decoder.readable;
+	    let reader = inputStream.getReader();
+	    let responseString = '';
+	    let streamResponse;
+	    while (responseString.slice(-2) != '\r\n') {
+	        streamResponse = await reader.read();
+	        if (streamResponse.value) {
+	            responseString += streamResponse.value;
+	        }
+	    };
+	    let deviceInfo = JSON.parse(responseString);
+	
+	    // Put in data mode:
+	    await reader.cancel();
+	    await inputDone.catch(() => {});
+	    reader = null;
+	    inputDone = null;
+	    await port.close();
+	    await port.open({
+	        baudRate: dataModeBaudRate
+	    });
+	
+	    // Make helper functions:
+	    rawWriter = port.writable.getWriter();
+	    sendMarker = (intValue) => {
+	        if (!rawWriter) {
+	            throw 'WebParMar (notReady): port not ready.'
+	        }
+	        let markerInt = new Uint8Array([intValue]);
+	        rawWriter.write(markerInt);
+	    };
+	    disconnect = async () => {
+	        rawWriter.releaseLock();
+	        await port.close();
+	        rawWriter = null
+	        gParMar = {
+	            'sendMarker': (x) => {throw `WebParMar (notConnected): Serial device not connected. Marker = ${x}`},
+	            'info': null,
+	            'disconnect': () => {throw 'WebParMar (notConnected): Serial device not connected.'}
+	        };
+	    };
+	
+	    // Clear marker:
+	    sendMarker(0);
+	
+	    // Set object:
+	    gParMar = {
+	        'sendMarker': sendMarker,
+	        'info': deviceInfo,
+	        'disconnect': disconnect
+	    };
+	
+	    // Also return it:
+	    return gParMar
+	
+	};
+	
+	
+	// Add functions to the head so that they can be accessed elsewhere. Note that this occurs async
+	// and may take a few hundred milliseconds to complete. As such, consider adding a wait after
+	// this script.
+	let jsScript = document.createElement("script");
+	jsScript.setAttribute('type', "text/javascript");
+	jsScript.innerHTML = genWidget.toString() + '\n' + connectToParMar.toString()
+	document.head.appendChild(jsScript);
+	__end__
+	set _prepare ""
+
+define inline_html webmarker_widget
+	__html__
+	<!--
+	Add a div and call the widget generator when it's loaded. Also add a hidden submit button, which 
+	will be programatically triggered when the marker device connects.
+	
+	NOTE: this implementation does not use <script> as it did not work at the time.
+	However, see: https://github.com/open-cogsci/osweb/issues/90
+	-->
+	<div id='widgetParent'>
+	<img onLoad="genWidget(document.getElementById('widgetParent'));" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" />
+	</div>
+	</br>
+	<input id='submitBtn' type='submit' value='done' style='visibility: hidden;'>
+	</br>
+	__end__
+	set description "Embeds custom HTML"
+
+define sketchpad welcome_screen
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=black font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Welcome to the marker tester task.<br />Please press any key to continue.<br /><br />" x=0 y=0 z_index=0
+

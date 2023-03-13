@@ -42,19 +42,15 @@ gParMar.disconnect().then(() => {
 })
 ```
 
+## OpenSesame
+See the [opensesame](https://github.com/solo-fsw/web-par-marker/opensesame) folder for an OpenSesame demo implementation.
+
 ## Notes
  - This library is still under development.
  - Check your browser and environment for compatibility with WebSerial. Additionally, certain security provisions may need to be navigated before a website can connect to a serial device (e.g. some browsers do not allow connection to a serial device by unsecure websites).
  - Make sure connectToParMar has finished before attempting to send a marker. This can e.g. be done using async/await, or checking that gParMar exists and the info field is not null.
- - The first time that users connect to the serial device, a popup us shown allowing them to give the website access to the device. Once access is granted, subsequent visits to the website can auto-connect to the device if it is connected to the PC.
+ - The first time that users connect to the serial device, a popup is shown allowing them to give the website access to the device. Once access is granted, subsequent visits to the website can auto-connect to the device if it is connected to the PC.
+ - Browsers generally do not allow code to connect to serial hardware outside of a user-gesture triggered callback. As such, the user must perform an action (e.g. click a button) before hardware can be connected to.
  - In most browsers, you can click the icon directly to the left of the URL in the navigation bar to view or disable the enabled serial devices.
-
-
-
-
-
-
-
-
-
+ - A serial device can only handle a single connection at a time. As such, if one tab is connected to a device, another tab will not be able to connect to it.
 
